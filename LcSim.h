@@ -11,6 +11,8 @@ class LcSim{
     float *energy_d;
     float *torque_d;
     int iSize_,jSize_,kSize_;
+    int threadsPerBlock;
+    int blocksPerKernel;
   //class constructor/destructor
   LcSim(int iSize,int jSize, int kSize);
   ~LcSim();
@@ -22,6 +24,9 @@ class LcSim{
   void sendDataToDevice();
   //get data from device
   void getDataFromDevice();
+  //calculuate torque
+  void calculateTorque(); //launches calculateTorqueKernel
+
 };
 
 //LcSim constructor
@@ -58,8 +63,11 @@ void LcSim::initDirector(){
   }//i                     
 }//initializeDirectori
 
-//Initialize memory of the GPU
+//Initialize memory and parametrs for the GPU
 void LcSim::initDevice(){
+  //calculate blocks to excicute
+  blocksPerKernel = (iSize_*jSize_*kSize_+threadsPerBlock)/threadsPerBlock;
+
   //allocate memory for director on GPU
   cudaMalloc( (void**) &director_d
             , 3*iSize_*jSize_*kSize_*sizeof(float));
@@ -92,8 +100,14 @@ void LcSim::getDataFromDevice(){
             , energy_d
             , iSize_*jSize_*kSize_*sizeof(float)
             , cudaMemcpyDeviceToHost );
-
-
 }//getDataFromDevice
 
+//calculate toqrue using GPU (lanunch GPU torque kernel)
+void LcSim::calculateTorque(){
+ /*
+  calculateTorqueKernel<<<blocksPerKernel,threadsPerBlock>>>(
+             director_d
+           , torque_d);
+*/
+}//calculate torque
 #endif
