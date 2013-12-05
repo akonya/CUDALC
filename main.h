@@ -3,7 +3,7 @@
 
 //cuda lib's
 #include <cuda.h>
-#include <cuda_rundtime.h>
+#include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
 //used for CUDA textures

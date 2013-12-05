@@ -13,6 +13,10 @@
 
 int main(){
 
+  //create LcSim object
+  LcSim lcSim = LcSim(10,10,10); //10x10x10 simulation
 
+  //initialize the GPU to use for simulation
+  lcSim.initializeGPU();
 
 }//end int main
