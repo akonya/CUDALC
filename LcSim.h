@@ -7,17 +7,17 @@ class LcSim{
   public:
     float *director;
     float *energy;
-    float *gpuDirector;
-    float *gpuEnergy;
-    float *gpuTorque;
+    float *director_d;
+    float *energy_d;
+    float *torque_d;
     int iSize_,jSize_,kSize_;
   //class constructor/destructor
   LcSim(int iSize,int jSize, int kSize);
   ~LcSim();
   //director initialization method
-  void initializeDirector();
+  void initDirector();
   //GPU initialization method
-  void initializeGPU();
+  void initDevice();
 
 };
 
@@ -41,7 +41,7 @@ LcSim::~LcSim(){
 }//LcSim
 
 //initilize LC director field
-void LcSim::initializeDirector(){
+void LcSim::initDirector(){
   //note: director indexed by the convention
   //      director[i][j][k][cord] -> director[cord+3*(i+iSize_*(j+jSize_*k))]
   for (int i=0;i<iSize_;i++){
@@ -56,15 +56,15 @@ void LcSim::initializeDirector(){
 }//initializeDirectori
 
 //Initialize memory of the GPU
-void LcSim::initializeGPU(){
+void LcSim::initDevice(){
   //allocate memory for director on GPU
-  cudaMalloc( (void**) &gpuDirector
+  cudaMalloc( (void**) &director_d
             , 3*iSize_*jSize_*kSize_*sizeof(float));
   //allocate memory for energy on GPU
-  cudaMalloc( (void**) &gpuEnergy
+  cudaMalloc( (void**) &energy_d
             , iSize_*jSize_*kSize_*sizeof(float));
   //allocate memory for torque on GPU
-  cudaMalloc( (void**) &gpuTorque
+  cudaMalloc( (void**) &torque_d
             , 4*3*iSize_*jSize_*kSize_*sizeof(float));
 }//initializeGPU
 #endif
