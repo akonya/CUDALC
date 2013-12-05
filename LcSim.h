@@ -18,7 +18,10 @@ class LcSim{
   void initDirector();
   //GPU initialization method
   void initDevice();
-
+  //copy host data to device (director)
+  void sendDataToDevice();
+  //get data from device
+  void getDataFromDevice();
 };
 
 //LcSim constructor
@@ -67,4 +70,30 @@ void LcSim::initDevice(){
   cudaMalloc( (void**) &torque_d
             , 4*3*iSize_*jSize_*kSize_*sizeof(float));
 }//initializeGPU
+
+//send data from host to device (director)
+void LcSim::sendDataToDevice(){
+  //copy director on host to device
+  cudaMemcpy( director_d
+            , director
+            , 3*iSize_*jSize_*kSize_*sizeof(float)
+            , cudaMemcpyHostToDevice);
+}//sendDataToDevice
+
+//get data from device - director and energy
+void LcSim::getDataFromDevice(){
+  //copy director on device to host
+  cudaMemcpy( director
+            , director_d
+            , 3*iSize_*jSize_*kSize_*sizeof(float)
+            , cudaMemcpyDeviceToHost );
+  //copy energy on device to host
+  cudaMemcpy( energy
+            , energy_d
+            , iSize_*jSize_*kSize_*sizeof(float)
+            , cudaMemcpyDeviceToHost );
+
+
+}//getDataFromDevice
+
 #endif

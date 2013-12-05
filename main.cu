@@ -22,4 +22,9 @@ int main(){
   //initialize the GPU to use for simulation
   lcSim.initDevice();
 
+  //send host data to the GPU
+  lcSim.sendDataToDevice();
+
+  //get data back from device
+  lcSim.getDataFromDevice();
 }//end int main
