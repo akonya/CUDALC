@@ -1,6 +1,4 @@
-LC-director-sim
+CUDALC - GPU based liquid crystal director simulation 
 ===============
 
-Simulation of liquid crystal director
 
-Sajedeh was here!
