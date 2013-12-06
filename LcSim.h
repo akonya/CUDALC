@@ -1,6 +1,9 @@
 #ifndef __LCSIM__
 #define __LCSIM__
 
+//include Kernel functions
+#include "LcSimKernels.h"
+
 //  Class for LC simulation
 class LcSim{
   //class varriables
