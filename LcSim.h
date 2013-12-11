@@ -8,6 +8,10 @@
 #include "LcSimKernels.h"
 #include "LcSimParameters.h"
 
+//include files to print from Kernel
+#include "cuPrintf.cu"
+#include "cuPrintf.cuh"
+
 //  Class for LC simulation
 class LcSim{
   //class varriables
@@ -93,6 +97,11 @@ void LcSim::initDevice(){
   //allocate memory for torque on GPU
   cudaMalloc( (void**) &torque_d
             , 4*3*iSize_*jSize_*kSize_*sizeof(float));
+  //set inital torque to zeros
+  cudaMemset(torque_d,0,4*3*iSize_*jSize_*kSize_*sizeof(float));
+
+  //initilize cudaPrintf
+  cudaPrintfInit();
 }//initializeGPU
 
 //send data from host to device (director)
@@ -128,6 +137,9 @@ void LcSim::calculateTorque(){
            , jSize_
            , kSize_ 
            , QZERO);
+ 
+  //print buffer from cuPrintf
+  cudaPrintfDisplay(stdout,true);
 }//calculate torque
 
 //update director positions
@@ -140,6 +152,9 @@ void LcSim::updateDirector(){
            , jSize_
            , kSize_ 
            , DELTAT);
+
+  //print buffer from cuPrintf
+  cudaPrintfDisplay(stdout,true);
 }//updateDirector
 
 //Print VTK frame into /VTK file

@@ -4,6 +4,10 @@
 #include "main.h"
 #include "LcSimParameters.h"
 
+//include files for cuPrintf
+#include "cuPrintf.cu"
+#include "cuPrintf.cuh"
+
 //device vector opperations
 
 //dot product
@@ -114,7 +118,7 @@ __global__ void calculateTorqueKernel(float *director_d
     
     // add summed torque on na to global memeory
     for(int cord=0;cord<3;cord++){
-      torque_d[4*(cord+3*(ib+iSize*(jb+jSize*kb)))] = TqaSum[cord];
+      torque_d[4*(cord+3*(ia+iSize*(ja+jSize*ka)))] = TqaSum[cord];
     }//cord
   }//if (tid< ... )
 
@@ -154,9 +158,12 @@ __global__ void updateDirectorKernel(float *director_d
       
       //sum trq components
       for(int b=0;b<4;b++){
-        Tq[cord] =  torque_d[b+4*(cord+3*(ia+iSize*(ja+jSize*ka)))];
+        Tq[cord] +=  torque_d[b+4*(cord+3*(ia+iSize*(ja+jSize*ka)))];
       }//b
     }//cord
+
+    //print torque
+    //cuPrintf("i=%d j=%d k=%d | tx=%f ty=%f tz=%f\n",ia,ja,ka,Tq[0],Tq[1],Tq[2]);
 
     //cross product used for update
     cross(Tq,na,tqCROSSna);
@@ -167,7 +174,7 @@ __global__ void updateDirectorKernel(float *director_d
     }//cord
 
     //calculate norm
-    norm = dot(na,na);
+    norm = sqrt(dot(nna,nna));
     
     //save normalized new director to global memory
     for(int cord=0;cord<3;cord++){
