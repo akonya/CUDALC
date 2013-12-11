@@ -1,6 +1,9 @@
 #ifndef __LCSIM__
 #define __LCSIM__
 
+//standard io libraries
+#include <stdio.h>
+
 //include Kernel functions
 #include "LcSimKernels.h"
 #include "LcSimParameters.h"
@@ -34,6 +37,8 @@ class LcSim{
   void calculateTorque(); //launches calculateTorqueKernel
   //update director
   void updateDirector(); //launches updateDirectorKernel
+  //print VTK frame 
+  void printVtkFrame(int step);
 
 };
 
@@ -115,7 +120,7 @@ void LcSim::getDataFromDevice(){
 
 //calculate toqrue using GPU (lanunch GPU torque kernel)
 void LcSim::calculateTorque(){
- 
+  //launch caclulateTorqueKernel on GPU
   calculateTorqueKernel<<<blocksPerKernel,threadsPerBlock>>>(
              director_d
            , torque_d
@@ -123,11 +128,11 @@ void LcSim::calculateTorque(){
            , jSize_
            , kSize_ 
            , QZERO);
-
 }//calculate torque
 
 //update director positions
 void LcSim::updateDirector(){
+  //launch updateDirectorKernel on GPU
   updateDirectorKernel<<<blocksPerKernel,threadsPerBlock>>>(
              director_d
            , torque_d
@@ -135,7 +140,93 @@ void LcSim::updateDirector(){
            , jSize_
            , kSize_ 
            , DELTAT);
-
-           
 }//updateDirector
+
+//Print VTK frame into /VTK file
+void LcSim::printVtkFrame(int step){
+  //local delclerations
+  int count;
+  float nx,ny,nz;
+  
+  //calculate total sites
+  int totalPoints = iSize_*jSize_*kSize_;
+
+  //write filename and open file to write
+  char fout[60];
+  sprintf(fout, "VTK//dir%d.vtk",step);
+  FILE*out;
+  out = fopen(fout,"w");
+
+  //write VKT header
+  fprintf(out,"# vtk DataFile Version 3.1\n");
+  fprintf(out,"director profile\n");
+  fprintf(out,"ASCII\n");
+  fprintf(out,"DATASET UNSTRUCTURED_GRID\n");
+  fprintf(out,"\n");
+
+  //write point locations
+  fprintf(out," POINTS %d FLOAT\n",totalPoints);
+  for(int i=0;i<iSize_;i++){
+    for(int j=0;j<jSize_;j++){
+      for(int k=0;k<kSize_;k++){
+        fprintf(out,"%f %f %f\n",float(i),float(j),float(k)); 
+      }//k
+    }//j
+  }//i
+  fprintf(out,"\n");
+
+  //write cell
+  fprintf(out,"CELLS %d %d\n",totalPoints,2*totalPoints);
+  count = 0;
+  for(int i=0;i<iSize_;i++){
+    for(int j=0;j<jSize_;j++){
+      for(int k=0;k<kSize_;k++){
+        fprintf(out,"1 %d\n",count);
+        count++; 
+      }//k
+    }//j
+  }//i
+  fprintf(out,"\n");
+
+  //write cell types
+  fprintf(out,"CELL_TYPES %d\n",totalPoints);
+  for(int i=0;i<iSize_;i++){
+    for(int j=0;j<jSize_;j++){
+      for(int k=0;k<kSize_;k++){
+        fprintf(out,"1\n"); 
+      }//k
+    }//j
+  }//i
+  fprintf(out,"\n");
+
+  //write director data
+  fprintf(out,"POINT_DATA %d\n",totalPoints);
+  fprintf(out,"VECTORS director FLOAT\n");
+  for(int i=0;i<iSize_;i++){
+    for(int j=0;j<jSize_;j++){
+      for(int k=0;k<kSize_;k++){
+        nx =  director[0+3*(i+iSize_*(j+jSize_*k))];         
+        ny =  director[1+3*(i+iSize_*(j+jSize_*k))];         
+        nz =  director[2+3*(i+iSize_*(j+jSize_*k))];         
+        fprintf(out,"%f %f %f\n",nx,ny,nz); 
+      }//k
+    }//j
+  }//i
+  fprintf(out,"\n");
+
+  //write ENERGY at each lattice site
+  fprintf(out,"SCALARS energy FLOAT 1\n");
+  fprintf(out,"LOOKUP_TABLE default\n");
+  for(int i=0;i<iSize_;i++){
+    for(int j=0;j<jSize_;j++){
+      for(int k=0;k<kSize_;k++){
+        // get energy by "energy[i+iSize_*(j+jSize_*k)]" once calcualted       
+        fprintf(out,"%f\n",0.0); 
+      }//k
+    }//j
+  }//i
+  fprintf(out,"\n");
+
+}//printVtkFrame
+
 #endif
