@@ -28,6 +28,9 @@ int main(){
   //do single GPU torque calculation
   lcSim.calculateTorque();
 
+  //do single GPU update
+  lcSim.updateDirector(0.001); 
+
   //get data back from device
   lcSim.getDataFromDevice();
 }//end int main

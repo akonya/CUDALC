@@ -29,6 +29,8 @@ class LcSim{
   void getDataFromDevice();
   //calculuate torque
   void calculateTorque(); //launches calculateTorqueKernel
+  //update director
+  void updateDirector(float dt); //launches updateDirectorKernel
 
 };
 
@@ -120,4 +122,17 @@ void LcSim::calculateTorque(){
            , 0.0);
 
 }//calculate torque
+
+//update director positions
+void LcSim::updateDirector(float dt){
+  updateDirectorKernel<<<blocksPerKernel,threadsPerBlock>>>(
+             director_d
+           , torque_d
+           , iSize_
+           , jSize_
+           , kSize_ 
+           , dt);
+
+           
+}//updateDirector
 #endif

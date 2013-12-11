@@ -19,7 +19,9 @@ __device__ void cross(float (&A)[3], float (&B)[3], float (&C)[3]){
 
 
 
+///////////////////////////////////
 //Kernel to Calculate torque
+///////////////////////////////////
 __global__ void calculateTorqueKernel(float *director_d
                                     , float *torque_d
                                     , int iSize
@@ -103,14 +105,76 @@ __global__ void calculateTorqueKernel(float *director_d
        TqaSum[cord] += Tqc - Tqa;
 
        //add trq compoment for nb to global memeory
-       torque_d[shift[b]+4*(cord+3*(ia+iSize*(ja+jSize*ka)))] = -Tqc-Tqb;
+       torque_d[shift[b]+4*(cord+3*(ib+iSize*(jb+jSize*kb)))] = -Tqc-Tqb;
 
      }//cord 
 
     }//for b
-
+    
+    // add summed torque on na to global memeory
+    for(int cord=0;cord<3;cord++){
+      torque_d[4*(cord+3*(ib+iSize*(jb+jSize*kb)))] = TqaSum[cord];
+    }//cord
   }//if (tid< ... )
 
-}//
+}//calculateTorqueKernel
+
+///////////////////////////////////////////
+//kernel to update director positions
+///////////////////////////////////////////
+__global__ void updateDirectorKernel(float *director_d
+                                   , float *torque_d
+                                   , int iSize
+                                   , int jSize
+                                   , int kSize
+                                   , float dt){
+ 
+  //declerations
+  float na[3];
+  float nna[3];
+  float tqCROSSna[3];
+  float Tq[3]={0.0};
+  float norm;
+
+  //get thread id
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+
+  //compute 3d indicies from 1d index
+  int ka = tid/(iSize*jSize);
+  int ja = (tid-(ka*iSize*jSize))/iSize;
+  int ia = tid - iSize*(ja+ka*jSize);
+ 
+  //only continue thread if ...
+  if(ia<iSize-1 && ja<jSize-1 && ka<kSize-1){ 
+
+    //get na.. looping over x,y,z
+    for(int cord=0;cord<3;cord++){
+      na[cord] = director_d[cord+3*(ia+iSize*(ja+jSize*ka))];
+      
+      //sum trq components
+      for(int b=0;b<4;b++){
+        Tq[cord] =  torque_d[b+4*(cord+3*(ia+iSize*(ja+jSize*ka)))];
+      }//b
+    }//cord
+
+    //cross product used for update
+    cross(Tq,na,tqCROSSna);
+
+    //calculate new na = nna
+    for(int cord=0;cord<3;cord++){
+      nna[cord] = na[cord] + tqCROSSna[cord]*dt;
+    }//cord
+
+    //calculate norm
+    norm = dot(na,na);
+    
+    //save normalized new director to global memory
+    for(int cord=0;cord<3;cord++){
+       director_d[cord+3*(ia+iSize*(ja+jSize*ka))] = nna[cord]/norm;
+    }//cord
+
+  }//if active
+
+}//udpateDirectorKernel
 
 #endif
