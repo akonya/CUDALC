@@ -68,6 +68,9 @@ void LcSim::initDirector(){
 
 //Initialize memory and parametrs for the GPU
 void LcSim::initDevice(){
+  //set threadsPerBlock (temoporarlily here to DEBUG)
+  threadsPerBlock=128;
+
   //calculate blocks to excicute
   blocksPerKernel = (iSize_*jSize_*kSize_+threadsPerBlock)/threadsPerBlock;
 
@@ -107,10 +110,14 @@ void LcSim::getDataFromDevice(){
 
 //calculate toqrue using GPU (lanunch GPU torque kernel)
 void LcSim::calculateTorque(){
- /*
+ 
   calculateTorqueKernel<<<blocksPerKernel,threadsPerBlock>>>(
              director_d
-           , torque_d);
-*/
+           , torque_d
+           , iSize_
+           , jSize_
+           , kSize_ 
+           , 0.0);
+
 }//calculate torque
 #endif

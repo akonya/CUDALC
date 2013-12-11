@@ -25,6 +25,9 @@ int main(){
   //send host data to the GPU
   lcSim.sendDataToDevice();
 
+  //do single GPU torque calculation
+  lcSim.calculateTorque();
+
   //get data back from device
   lcSim.getDataFromDevice();
 }//end int main

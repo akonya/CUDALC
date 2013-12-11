@@ -35,6 +35,9 @@ __global__ void calculateTorqueKernel(float *director_d
   float TqaSum[3] = {0.0};
   float Tqa,Tqb,Tqc;
   float rab[3];
+  float rabi[3] = {1.,0.,0.};
+  float rabj[3] = {0.,1.,0.};
+  float rabk[3] = {0.,0.,1.}; 
   int di[3] = {1,0,0};
   int dj[3] = {0,1,0};
   int dk[3] = {0,0,1}; 
@@ -60,9 +63,9 @@ __global__ void calculateTorqueKernel(float *director_d
     for(int b=0;b<3;b++){
 
       //get rab vector
-      rab[0] = float(di[b]);
-      rab[1] = float(dj[b]);
-      rab[2] = float(dk[b]);
+      rab[0] = rabi[b];
+      rab[1] = rabj[b];
+      rab[2] = rabk[b];
 
       //get indiceis of neighbor 
       ib = ia+di[b];
