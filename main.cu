@@ -25,11 +25,22 @@ int main(){
   //send host data to the GPU
   lcSim.sendDataToDevice();
 
-  //do single GPU torque calculation
-  lcSim.calculateTorque();
+  //dynamics loop
+  for(int step=0;step<NSTEPS;step++){
+    //calculate torque
+    lcSim.calculateTorque();
 
-  //do single GPU update
-  lcSim.updateDirector(); 
+    //update director
+    lcSim.updateDirector();
+
+    //print a frame every FRAMERATE steps
+    if(step%FRAMERATE==0){
+      //copy data from GPU to CPU
+      lcSim.getDataFromDevice();
+      //print VTK file 
+      lcSim.printVtkFrame(step);
+    }//if frame
+  }//step
 
   //get data back from device
   lcSim.getDataFromDevice();

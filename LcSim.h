@@ -144,6 +144,9 @@ void LcSim::updateDirector(){
 
 //Print VTK frame into /VTK file
 void LcSim::printVtkFrame(int step){
+
+  printf("step = %d\n",step);  
+
   //local delclerations
   int count;
   float nx,ny,nz;

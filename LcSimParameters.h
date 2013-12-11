@@ -10,6 +10,8 @@
 #define PITCH 10     //pitch in units of lattice spacing
 #define QZERO 2.0*PI/PITCH    //2*PI/pitch
 
-#define DELTAT 0.001    //timestep
+#define DELTAT 0.00001    //timestep
+#define NSTEPS 10000    //total steps
+#define FRAMERATE 1000   //how many steps between frames
 
 #endif
