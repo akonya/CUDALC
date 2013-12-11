@@ -2,6 +2,7 @@
 #define __LCSIMKERNELS__
 
 #include "main.h"
+#include "LcSimParameters.h"
 
 //device vector opperations
 

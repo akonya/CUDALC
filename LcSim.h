@@ -3,6 +3,7 @@
 
 //include Kernel functions
 #include "LcSimKernels.h"
+#include "LcSimParameters.h"
 
 //  Class for LC simulation
 class LcSim{
@@ -16,9 +17,11 @@ class LcSim{
     int iSize_,jSize_,kSize_;
     int threadsPerBlock;
     int blocksPerKernel;
+
   //class constructor/destructor
-  LcSim(int iSize,int jSize, int kSize);
+  LcSim();
   ~LcSim();
+
   //director initialization method
   void initDirector();
   //GPU initialization method
@@ -30,16 +33,16 @@ class LcSim{
   //calculuate torque
   void calculateTorque(); //launches calculateTorqueKernel
   //update director
-  void updateDirector(float dt); //launches updateDirectorKernel
+  void updateDirector(); //launches updateDirectorKernel
 
 };
 
 //LcSim constructor
-LcSim::LcSim(int iSize, int jSize, int kSize){
+LcSim::LcSim(){
   //set sized of cubic grid
-  iSize_ = iSize;
-  jSize_ = jSize;
-  kSize_ = kSize;
+  iSize_ = ISIZE;
+  jSize_ = JSIZE;
+  kSize_ = KSIZE;
   //initialize director and energy arrays
   director = new float[3*iSize_*jSize_*kSize_];
   energy = new float[iSize_*jSize_*kSize_];
@@ -119,19 +122,19 @@ void LcSim::calculateTorque(){
            , iSize_
            , jSize_
            , kSize_ 
-           , 0.0);
+           , QZERO);
 
 }//calculate torque
 
 //update director positions
-void LcSim::updateDirector(float dt){
+void LcSim::updateDirector(){
   updateDirectorKernel<<<blocksPerKernel,threadsPerBlock>>>(
              director_d
            , torque_d
            , iSize_
            , jSize_
            , kSize_ 
-           , dt);
+           , DELTAT);
 
            
 }//updateDirector

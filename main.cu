@@ -14,7 +14,7 @@
 int main(){
 
   //create LcSim object
-  LcSim lcSim = LcSim(10,10,10); //10x10x10 simulation
+  LcSim lcSim = LcSim(); //10x10x10 simulation
 
   //intialize director
   lcSim.initDirector();
@@ -29,7 +29,7 @@ int main(){
   lcSim.calculateTorque();
 
   //do single GPU update
-  lcSim.updateDirector(0.001); 
+  lcSim.updateDirector(); 
 
   //get data back from device
   lcSim.getDataFromDevice();
