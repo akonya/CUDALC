@@ -11,7 +11,7 @@
 #define QZERO 2.0*PI/PITCH    //2*PI/pitch
 
 #define DELTAT 0.0001    //timestep
-#define NSTEPS 10000    //total steps
+#define NSTEPS 100000    //total steps
 #define FRAMERATE 1000   //how many steps between frames
 
 #endif

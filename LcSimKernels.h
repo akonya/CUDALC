@@ -77,6 +77,8 @@ __global__ void calculateTorqueKernel(float *director_d
       randTq[cord] = curand_normal(&localState);
     }//cord
 
+    //cuPrintf("%f  - %f - %f \n", randTq[0],randTq[1],randTq[2]);
+
     //put updated local curand state back in global mem
     states[tid] = localState;
 
@@ -164,7 +166,7 @@ __global__ void updateDirectorKernel(float *director_d
   int ia = tid - iSize*(ja+ka*jSize);
  
   //only continue thread if ...
-  if(ia<iSize-1 && ja<jSize-1 && ka<kSize-1){ 
+  if(ia<iSize && ja<jSize && ka<kSize){ 
 
     //get na.. looping over x,y,z
     for(int cord=0;cord<3;cord++){
@@ -177,7 +179,7 @@ __global__ void updateDirectorKernel(float *director_d
     }//cord
 
     //print torque
-    //cuPrintf("i=%d j=%d k=%d | tx=%f ty=%f tz=%f\n",ia,ja,ka,Tq[0],Tq[1],Tq[2]);
+   // cuPrintf("i=%d j=%d k=%d | tx=%f ty=%f tz=%f\n",ia,ja,ka,Tq[0],Tq[1],Tq[2]);
 
     //cross product used for update
     cross(Tq,na,tqCROSSna);

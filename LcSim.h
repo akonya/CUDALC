@@ -50,6 +50,8 @@ class LcSim{
   void printVtkFrame(int step);
   //clean up memory after simulation complete
   void shutdown();
+  //simple random number [0,1]
+  float randf();
 
 };
 
@@ -74,14 +76,22 @@ LcSim::~LcSim(){
 
 //initilize LC director field
 void LcSim::initDirector(){
+  //declare
+  float nx, ny, nz, norm;
+
   //note: director indexed by the convention
   //      director[i][j][k][cord] -> director[cord+3*(i+iSize_*(j+jSize_*k))]
   for (int i=0;i<iSize_;i++){
     for(int j=0;j<jSize_;j++){
       for(int k=0;k<kSize_;k++){
-        director[0+3*(i+iSize_*(j+jSize_*k))] = 1.0;
-        director[1+3*(i+iSize_*(j+jSize_*k))] = 0.0;
-        director[2+3*(i+iSize_*(j+jSize_*k))] = 0.0;
+        nx = 2.0*(randf()-0.5);
+        ny = 2.0*(randf()-0.5);
+        nz = 2.0*(randf()-0.5);
+        norm = sqrt(nx*nx+ny*ny+nz*nz);
+       
+        director[0+3*(i+iSize_*(j+jSize_*k))] = nx/norm;
+        director[1+3*(i+iSize_*(j+jSize_*k))] = ny/norm;
+        director[2+3*(i+iSize_*(j+jSize_*k))] = nz/norm;
       }//k
     }//j
   }//i                     
@@ -268,5 +278,10 @@ void LcSim::shutdown(){
   cudaFree(director_d);
   cudaFree(torque_d);
   cudaFree(states_d);
-}//shutdown
+}//shutdowni
+
+//random number (0,1)
+float LcSim::randf(){
+  return float(rand())/float(RAND_MAX);
+}//randf
 #endif

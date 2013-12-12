@@ -28,7 +28,7 @@ int main(){
   //dynamics loop
   for(int step=0;step<NSTEPS;step++){
     //calculate torque
-    lcSim.calculateTorque(0.01);
+    lcSim.calculateTorque(1.0);
 
     //update director
     lcSim.updateDirector();
