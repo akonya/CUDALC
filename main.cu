@@ -14,7 +14,7 @@
 int main(){
 
   //create LcSim object
-  LcSim lcSim = LcSim(); //10x10x10 simulation
+  LcSim lcSim = LcSim();
 
   //intialize director
   lcSim.initDirector();
