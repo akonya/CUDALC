@@ -1,6 +1,10 @@
 #ifndef __LCSIMKERNELS__
 #define __LCSIMKERNELS__
 
+//include cuda random number generator
+#include <curand_kernel.h>
+
+//main header and parameters
 #include "main.h"
 #include "LcSimParameters.h"
 
@@ -32,7 +36,9 @@ __global__ void calculateTorqueKernel(float *director_d
                                     , int iSize
                                     , int jSize
                                     , int kSize
-                                    , float q0){
+                                    , float q0
+                                    , float sigma  
+                                    , curandState *states){
   //declerations
   int ib, jb, kb;
   float naDOTnb, naDOTnb2, naDOTrab, nbDOTrab, naCROSSnbDOTrab;
@@ -41,6 +47,7 @@ __global__ void calculateTorqueKernel(float *director_d
   float nb[3];
   float TqaSum[3] = {0.0};
   float Tqa,Tqb,Tqc;
+  float randTq[3];
   float rab[3];
   float rabi[3] = {1.,0.,0.};
   float rabj[3] = {0.,1.,0.};
@@ -60,11 +67,18 @@ __global__ void calculateTorqueKernel(float *director_d
  
   //only continue thread if ...
   if(ia<iSize-1 && ja<jSize-1 && ka<kSize-1){ 
+   
+    //get local curandState
+    curandState localState = states[tid];
 
-    //get na.. looping over x,y,z
+    //get na.. and rand kicks looping over x,y,z
     for(int cord=0;cord<3;cord++){
       na[cord] = director_d[cord+3*(ia+iSize*(ja+jSize*ka))];
+      randTq[cord] = curand_normal(&localState);
     }//cord
+
+    //put updated local curand state back in global mem
+    states[tid] = localState;
 
     //loop over neighbor particles
     for(int b=0;b<3;b++){
@@ -118,7 +132,7 @@ __global__ void calculateTorqueKernel(float *director_d
     
     // add summed torque on na to global memeory
     for(int cord=0;cord<3;cord++){
-      torque_d[4*(cord+3*(ia+iSize*(ja+jSize*ka)))] = TqaSum[cord];
+      torque_d[4*(cord+3*(ia+iSize*(ja+jSize*ka)))] = TqaSum[cord] + randTq[cord];
     }//cord
   }//if (tid< ... )
 
@@ -185,4 +199,16 @@ __global__ void updateDirectorKernel(float *director_d
 
 }//udpateDirectorKernel
 
+///////////////////////////////
+// setupCurandKernel    
+///////////////////////////////
+__global__ void setupCurandKernel(curandState *state, int maxTid){
+  //get thread id
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  
+  //if live kernel
+  if (tid<maxTid){
+    curand_init(1234, tid, 0, &state[tid]);
+  }//tid<maxTid
+}//setupCurandKernel
 #endif

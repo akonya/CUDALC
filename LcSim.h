@@ -1,8 +1,9 @@
 #ifndef __LCSIM__
 #define __LCSIM__
 
-//standard io libraries
+//standard libraries
 #include <stdio.h>
+#include <math.h>
 
 //include Kernel functions
 #include "LcSimKernels.h"
@@ -11,6 +12,9 @@
 //include files to print from Kernel
 #include "cuPrintf.cu"
 #include "cuPrintf.cuh"
+
+//include curand
+#include <curand_kernel.h>
 
 //  Class for LC simulation
 class LcSim{
@@ -24,6 +28,7 @@ class LcSim{
     int iSize_,jSize_,kSize_;
     int threadsPerBlock;
     int blocksPerKernel;
+    curandState *states_d;
 
   //class constructor/destructor
   LcSim();
@@ -38,11 +43,13 @@ class LcSim{
   //get data from device
   void getDataFromDevice();
   //calculuate torque
-  void calculateTorque(); //launches calculateTorqueKernel
+  void calculateTorque(float KbT); //launches calculateTorqueKernel
   //update director
   void updateDirector(); //launches updateDirectorKernel
   //print VTK frame 
   void printVtkFrame(int step);
+  //clean up memory after simulation complete
+  void shutdown();
 
 };
 
@@ -102,6 +109,13 @@ void LcSim::initDevice(){
 
   //initilize cudaPrintf
   cudaPrintfInit();
+
+  //intialize memeory for curandStates
+  cudaMalloc((void**)&states_d, iSize_*jSize_*kSize_*sizeof(curandState));
+
+  //run initializaiton kernel
+  setupCurandKernel<<<blocksPerKernel,threadsPerBlock>>>(states_d,iSize_*jSize_*kSize_);
+
 }//initializeGPU
 
 //send data from host to device (director)
@@ -128,7 +142,7 @@ void LcSim::getDataFromDevice(){
 }//getDataFromDevice
 
 //calculate toqrue using GPU (lanunch GPU torque kernel)
-void LcSim::calculateTorque(){
+void LcSim::calculateTorque(float KbT){
   //launch caclulateTorqueKernel on GPU
   calculateTorqueKernel<<<blocksPerKernel,threadsPerBlock>>>(
              director_d
@@ -136,7 +150,9 @@ void LcSim::calculateTorque(){
            , iSize_
            , jSize_
            , kSize_ 
-           , QZERO);
+           , QZERO
+           , sqrt(41.2*KbT)
+           , states_d);
  
   //print buffer from cuPrintf
   cudaPrintfDisplay(stdout,true);
@@ -247,4 +263,10 @@ void LcSim::printVtkFrame(int step){
 
 }//printVtkFrame
 
+//clean up memeory on device
+void LcSim::shutdown(){
+  cudaFree(director_d);
+  cudaFree(torque_d);
+  cudaFree(states_d);
+}//shutdown
 #endif

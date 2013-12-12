@@ -28,7 +28,7 @@ int main(){
   //dynamics loop
   for(int step=0;step<NSTEPS;step++){
     //calculate torque
-    lcSim.calculateTorque();
+    lcSim.calculateTorque(0.01);
 
     //update director
     lcSim.updateDirector();
@@ -42,6 +42,6 @@ int main(){
     }//if frame
   }//step
 
-  //get data back from device
-  lcSim.getDataFromDevice();
+  //end LcSim and free memeorye
+  lcSim.shutdown();
 }//end int main
