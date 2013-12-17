@@ -7,7 +7,7 @@
 #define JSIZE 30     //lattice size in j (y) direction
 #define KSIZE 30     //lattice size in k (z) direction
 
-#define PITCH 10     //pitch in units of lattice spacing
+#define PITCH 11     //pitch in units of lattice spacing
 #define QZERO 2.0*PI/PITCH    //2*PI/pitch
 
 #define DELTAT 0.0001    //timestep
