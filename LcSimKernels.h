@@ -112,7 +112,7 @@ __global__ void calculateTorqueKernel(float *director_d
      for(int cord=0;cord<3;cord++){
      
        //common toqrue component
-       Tqc= 2.0*naDOTnb*naCROSSnb[cord] \
+       Tqc= naDOTnb*naCROSSnb[cord] \
                    + q0*( naCROSSnbDOTrab*naCROSSnb[cord] \
                    + naDOTnb2*rab[cord]);
 
