@@ -35,11 +35,16 @@ int main(){
 
     //print a frame every FRAMERATE steps
     if(step%FRAMERATE==0){
+
       //copy data from GPU to CPU
       lcSim.getDataFromDevice();
+
       //print VTK file 
       lcSim.printVtkFrame(step);
+
+      //print BMP file
       lcSim.printBmpFrame(step);
+      
     }//if frame
   }//step
 

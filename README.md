@@ -26,6 +26,7 @@ OR compile it yourself, and run in a local enviroment
 - `LcSim.h` contains the construction of the `LcSim` class used in the main dynamics loop
 - `LcSimParameters.h` contains simulation parameters such as timestep, pitch, size ect.
 - `LcSimKernels.h` contains the GPU kernels which are called within the `LcSim` class
+- `optics.h'  contains functions to do optics calculations called within `LcSim.printBmpFrame()`
 
 
 
