@@ -25,7 +25,9 @@ int main(){
   //send host data to the GPU
   lcSim.sendDataToDevice();
 
-  //dynamics loop
+  /************************************/
+  /* dynamics loop                    */
+  /************************************/
   for(int step=0;step<NSTEPS;step++){
     //calculate torque
     lcSim.calculateTorque(0.1);
@@ -44,7 +46,7 @@ int main(){
 
       //print BMP file
       lcSim.printBmpFrame(step);
-      
+
     }//if frame
   }//step
 
