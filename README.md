@@ -7,6 +7,7 @@ LC Director Dynamics in CUDA
 - navigate into directory `cd CUDALC`
 - load the CUDA module `module load cuda`
 - make output folder for VTK files `mkdir VTK`
+- make output folder for BMP files `mkdir BMP`
  
 You can now run the code with the bach script...
 

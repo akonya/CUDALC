@@ -16,6 +16,9 @@
 //include curand
 #include <curand_kernel.h>
 
+//include optics calc
+#include "optics.h"
+
 //  Class for LC simulation
 class LcSim{
   //class varriables
@@ -29,6 +32,7 @@ class LcSim{
     int threadsPerBlock;
     int blocksPerKernel;
     curandState *states_d;
+    optics_struct intensity[ISIZE*JSIZE];
 
   //class constructor/destructor
   LcSim();
@@ -48,6 +52,8 @@ class LcSim{
   void updateDirector(); //launches updateDirectorKernel
   //print VTK frame 
   void printVtkFrame(int step);
+  //print Bmp frame 
+  void printBmpFrame(int step);
   //clean up memory after simulation complete
   void shutdown();
   //simple random number [0,1]
@@ -272,6 +278,15 @@ void LcSim::printVtkFrame(int step){
   fprintf(out,"\n");
 
 }//printVtkFrame
+
+
+
+//Print BMPframe into /BMP folder
+void LcSim::printBmpFrame(int step){
+  get_intensity(director,intensity);
+  BMP_write(step,intensity);
+
+}//printBmpFrame
 
 //clean up memeory on device
 void LcSim::shutdown(){

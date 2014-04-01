@@ -28,7 +28,7 @@ int main(){
   //dynamics loop
   for(int step=0;step<NSTEPS;step++){
     //calculate torque
-    lcSim.calculateTorque(1.0);
+    lcSim.calculateTorque(0.1);
 
     //update director
     lcSim.updateDirector();
@@ -39,6 +39,7 @@ int main(){
       lcSim.getDataFromDevice();
       //print VTK file 
       lcSim.printVtkFrame(step);
+      lcSim.printBmpFrame(step);
     }//if frame
   }//step
 
