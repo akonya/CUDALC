@@ -1,3 +1,4 @@
+
 #ifndef __LCSIM__
 #define __LCSIM__
 
@@ -25,8 +26,10 @@ class LcSim{
   public:
     float *director;
     float *energy;
+    int *mobile;
     float *director_d;
     float *energy_d;
+    int *mobile_d;
     float *torque_d;
     int iSize_,jSize_,kSize_;
     int threadsPerBlock;
@@ -58,7 +61,6 @@ class LcSim{
   void shutdown();
   //simple random number [0,1]
   float randf();
-
 };
 
 //LcSim constructor
@@ -70,6 +72,7 @@ LcSim::LcSim(){
   //initialize director and energy arrays
   director = new float[3*iSize_*jSize_*kSize_];
   energy = new float[iSize_*jSize_*kSize_];
+  mobile = new int[iSize_*jSize_*kSize_];
 }//LcSim
 
 //LcSim deconstructor
@@ -82,22 +85,63 @@ LcSim::~LcSim(){
 
 //initilize LC director field
 void LcSim::initDirector(){
-  //declare
-  float nx, ny, nz, norm;
+  //declarei
+  float nx, ny, nz, ifl, jfl,norm, Radius, distance;
 
+    float Cx [] = { 0.0 , 0.0, float(iSize_)-1.0,float(iSize_)-1.0}; //four corners
+
+
+    float Cy [] = { 0.0 , float(jSize_)-1.0, 0.0, float(jSize_)-1.0}; //four corners
+ 
+  Radius = float(iSize_)/4.0; //four corners
+    
   //note: director indexed by the convention
   //      director[i][j][k][cord] -> director[cord+3*(i+iSize_*(j+jSize_*k))]
   for (int i=0;i<iSize_;i++){
     for(int j=0;j<jSize_;j++){
       for(int k=0;k<kSize_;k++){
+        ifl=float(i);
+        jfl=float(j);
+        mobile[i+iSize_*(j+jSize_*k)] = 1;
+
         nx = 2.0*(randf()-0.5);
         ny = 2.0*(randf()-0.5);
         nz = 2.0*(randf()-0.5);
+        
+        for(int ipost=0;ipost<4;ipost++ ){
+            distance = sqrt((ifl-Cx[ipost])*(ifl-Cx[ipost])+(jfl-Cy[ipost])*(jfl-Cy[ipost]));
+            if (distance < Radius){        
+              mobile[i+iSize_*(j+jSize_*k)] = 0;
+              nx =2.0*(randf()-0.5);
+              ny =nx*(jfl-Cy[ipost])/(ifl-Cx[ipost]+0.0001);  //ny=nx*tan(theta)
+              nz =0.0;
+            }//if
+        }//ipost
+        
         norm = sqrt(nx*nx+ny*ny+nz*nz);
        
         director[0+3*(i+iSize_*(j+jSize_*k))] = nx/norm;
         director[1+3*(i+iSize_*(j+jSize_*k))] = ny/norm;
         director[2+3*(i+iSize_*(j+jSize_*k))] = nz/norm;
+
+//       if((i==0 || i==iSize_-1) && mobile[i+iSize_*(j+jSize_*k)]==1){
+//        director[0+3*(i+iSize_*(j+jSize_*k))] = 1.0;
+//        director[1+3*(i+iSize_*(j+jSize_*k))] = 0.0;
+//        director[2+3*(i+iSize_*(j+jSize_*k))] = 0.0;
+//       }//if i
+
+//       if((j==0 || j==jSize_-1) && mobile[i+iSize_*(j+jSize_*k)]==1){
+//        director[0+3*(i+iSize_*(j+jSize_*k))] = 0.0;
+//        director[1+3*(i+iSize_*(j+jSize_*k))] = 1.0;
+//        director[2+3*(i+iSize_*(j+jSize_*k))] = 0.0;
+//       }//if j
+
+       if((k==0 || k==kSize_-1) && mobile[i+iSize_*(j+jSize_*k)]==1){
+        director[0+3*(i+iSize_*(j+jSize_*k))] = 0.0;
+        director[1+3*(i+iSize_*(j+jSize_*k))] = 0.0;
+        director[2+3*(i+iSize_*(j+jSize_*k))] = 1.0;
+       }//if k
+
       }//k
     }//j
   }//i                     
@@ -114,9 +158,20 @@ void LcSim::initDevice(){
   //allocate memory for director on GPU
   cudaMalloc( (void**) &director_d
             , 3*iSize_*jSize_*kSize_*sizeof(float));
+  //calculate blocks to excicute
+  blocksPerKernel = (iSize_*jSize_*kSize_+threadsPerBlock)/threadsPerBlock;
+
+  //allocate memory for director on GPU
+  cudaMalloc( (void**) &director_d
+            , 3*iSize_*jSize_*kSize_*sizeof(float));
   //allocate memory for energy on GPU
   cudaMalloc( (void**) &energy_d
             , iSize_*jSize_*kSize_*sizeof(float));
+
+  //allocate memory for mobile on GPU
+  cudaMalloc( (void**) &mobile_d
+            , iSize_*jSize_*kSize_*sizeof(int));
+
   //allocate memory for torque on GPU
   cudaMalloc( (void**) &torque_d
             , 4*3*iSize_*jSize_*kSize_*sizeof(float));
@@ -134,14 +189,21 @@ void LcSim::initDevice(){
 
 }//initializeGPU
 
-//send data from host to device (director)
+//send data from host to device (director and mobile)
 void LcSim::sendDataToDevice(){
   //copy director on host to device
   cudaMemcpy( director_d
             , director
             , 3*iSize_*jSize_*kSize_*sizeof(float)
             , cudaMemcpyHostToDevice);
+
+  //copy mobile on host to device
+  cudaMemcpy( mobile_d
+            , mobile
+            , iSize_*jSize_*kSize_*sizeof(int)
+            , cudaMemcpyHostToDevice);
 }//sendDataToDevice
+
 
 //get data from device - director and energy
 void LcSim::getDataFromDevice(){
@@ -179,10 +241,11 @@ void LcSim::updateDirector(){
   //launch updateDirectorKernel on GPU
   updateDirectorKernel<<<blocksPerKernel,threadsPerBlock>>>(
              director_d
+           , mobile_d
            , torque_d
            , iSize_
            , jSize_
-           , kSize_ 
+          , kSize_ 
            , DELTAT);
 
   //print buffer from cuPrintf
@@ -191,8 +254,6 @@ void LcSim::updateDirector(){
 
 //Print VTK frame into /VTK file
 void LcSim::printVtkFrame(int step){
-
-  printf("step = %d\n",step);  
 
   //local delclerations
   int count;
@@ -226,29 +287,6 @@ void LcSim::printVtkFrame(int step){
   fprintf(out,"\n");
 
   //write cell
-  fprintf(out,"CELLS %d %d\n",totalPoints,2*totalPoints);
-  count = 0;
-  for(int i=0;i<iSize_;i++){
-    for(int j=0;j<jSize_;j++){
-      for(int k=0;k<kSize_;k++){
-        fprintf(out,"1 %d\n",count);
-        count++; 
-      }//k
-    }//j
-  }//i
-  fprintf(out,"\n");
-
-  //write cell types
-  fprintf(out,"CELL_TYPES %d\n",totalPoints);
-  for(int i=0;i<iSize_;i++){
-    for(int j=0;j<jSize_;j++){
-      for(int k=0;k<kSize_;k++){
-        fprintf(out,"1\n"); 
-      }//k
-    }//j
-  }//i
-  fprintf(out,"\n");
-
   //write director data
   fprintf(out,"POINT_DATA %d\n",totalPoints);
   fprintf(out,"VECTORS director FLOAT\n");
@@ -277,6 +315,8 @@ void LcSim::printVtkFrame(int step){
   }//i
   fprintf(out,"\n");
 
+  printf("step = %d\n",step);  
+
 }//printVtkFrame
 
 
@@ -284,7 +324,7 @@ void LcSim::printVtkFrame(int step){
 //Print BMPframe into /BMP folder
 void LcSim::printBmpFrame(int step){
   get_intensity(director,intensity);
-  BMP_write(step,intensity);
+  BMP_write(step,intensity,mobile);
 
 }//printBmpFrame
 

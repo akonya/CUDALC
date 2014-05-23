@@ -28,9 +28,14 @@ int main(){
   /************************************/
   /* dynamics loop                    */
   /************************************/
+  float KbT=0.001;
+  int Trate=100000;
+  int counter=0;
   for(int step=0;step<NSTEPS;step++){
+    //calcualte KbT(step)
+//    KbT = 0.01+0.99*exp(-0.00006*float(step));
     //calculate torque
-    lcSim.calculateTorque(0.1);
+    lcSim.calculateTorque(KbT);
 
     //update director
     lcSim.updateDirector();
@@ -45,9 +50,20 @@ int main(){
       lcSim.printVtkFrame(step);
 
       //print BMP file
-      lcSim.printBmpFrame(step);
-
+      lcSim.printBmpFrame(counter);
+      
+      counter=counter+1;
     }//if frame
+
+    if(step%Trate==0){
+      if(KbT<1.0){
+        KbT=KbT+0.1;
+      }
+      if(KbT>=1.0){
+        KbT=KbT-0.1;
+      }  
+    }
+
   }//step
 
   //end LcSim and free memeorye

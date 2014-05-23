@@ -1,3 +1,6 @@
+//** Homotropic BC added
+//Added periodic boundary condition subroutine (pb) and apply it only on x and y boundaries
+
 #ifndef __LCSIMKERNELS__
 #define __LCSIMKERNELS__
 
@@ -11,6 +14,17 @@
 //include files for cuPrintf
 #include "cuPrintf.cu"
 #include "cuPrintf.cuh"
+
+//device function for periodic boundary conditions
+__device__ int pb(int i, int iMax){
+  if(i<0){
+    return iMax-1;
+  }else if(i==iMax){
+    return 0;
+  }//if
+  return i;
+}//end pb
+
 
 //device vector opperations
 
@@ -66,7 +80,7 @@ __global__ void calculateTorqueKernel(float *director_d
   int ia = tid - iSize*(ja+ka*jSize);
  
   //only continue thread if ...
-  if(ia<iSize-1 && ja<jSize-1 && ka<kSize-1){ 
+  if(ia<iSize && ja<jSize && ka<kSize-1){ 
    
     //get local curandState
     curandState localState = states[tid];
@@ -74,7 +88,8 @@ __global__ void calculateTorqueKernel(float *director_d
     //get na.. and rand kicks looping over x,y,z
     for(int cord=0;cord<3;cord++){
       na[cord] = director_d[cord+3*(ia+iSize*(ja+jSize*ka))];
-      randTq[cord] = curand_normal(&localState);
+      //( normally distributed random number mean=0, stdv = 1)*(sigma)
+      randTq[cord] = curand_normal(&localState)*sigma;
     }//cord
 
     //cuPrintf("%f  - %f - %f \n", randTq[0],randTq[1],randTq[2]);
@@ -91,9 +106,11 @@ __global__ void calculateTorqueKernel(float *director_d
       rab[2] = rabk[b];
 
       //get indiceis of neighbor 
-      ib = ia+di[b];
-      jb = ja+dj[b];
+      ib = pb(ia+di[b],iSize);
+      jb = pb(ja+dj[b],jSize);
       kb = ka+dk[b];
+  
+
 
       //get nb.. looping over x,y,z
       for(int cord=0;cord<3;cord++){
@@ -144,6 +161,7 @@ __global__ void calculateTorqueKernel(float *director_d
 //kernel to update director positions
 ///////////////////////////////////////////
 __global__ void updateDirectorKernel(float *director_d
+                                   , int *mobile_d
                                    , float *torque_d
                                    , int iSize
                                    , int jSize
@@ -166,7 +184,7 @@ __global__ void updateDirectorKernel(float *director_d
   int ia = tid - iSize*(ja+ka*jSize);
  
   //only continue thread if ...
-  if(ia<iSize && ja<jSize && ka<kSize){ 
+  if(ia<iSize && ja<jSize && ka<kSize-1 && ka!=0 && mobile_d[ia+iSize*(ja+jSize*ka)]==1){ 
 
     //get na.. looping over x,y,z
     for(int cord=0;cord<3;cord++){
