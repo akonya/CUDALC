@@ -1,3 +1,5 @@
+// In BMP-Write, added that plot it only if it is not a post
+
 #ifndef __OPTICS__
 #define __OPTICS__
 
@@ -104,7 +106,7 @@ void matrix_copy(dcomp (&A)[2][2],dcomp (&B)[2][2])
 /**********************************************************************/
 /** write bmp file                                                   **/
 /**********************************************************************/
-void BMP_write(int n,optics_struct (&intensity)[ISIZE*JSIZE])
+void BMP_write(int n,optics_struct (&intensity)[ISIZE*JSIZE],int *mobile)
 {
 	int k=0;
 	char A[3*ISIZE*JSIZE];
@@ -112,18 +114,18 @@ void BMP_write(int n,optics_struct (&intensity)[ISIZE*JSIZE])
 	{
 		for (int j=0;j<JSIZE;j++)
 		{
-			A[k]=char(255*intensity[i+ISIZE*j].R);
+			A[k]=char(255*intensity[i+ISIZE*j].R*mobile[i+ISIZE*j]);
 			k++;
-			A[k]=char(255*intensity[i+ISIZE*j].G);
+			A[k]=char(255*intensity[i+ISIZE*j].G*mobile[i+ISIZE*j]);
 			k++;
-			A[k]=char(255*intensity[i+ISIZE*j].B);
+			A[k]=char(255*intensity[i+ISIZE*j].B*mobile[i+ISIZE*j]);
 			k++;
 		}
 	}
 	
 	char filename[30];
 	sprintf(filename,"BMP//PIC%d.bmp",n);
-	write_bmp(filename,ISIZE,JSIZE,A);
+	write_bmp(filename,JSIZE,ISIZE,A);
 }//BMP_write
 
 
